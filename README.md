@@ -68,6 +68,34 @@ git clone https://github.com/bhavukm/terraform-ecs-ecr-alb.git
 cd terraform-ecs-ecr-alb
 ```
 
+## Filling in dev.tfvars
+
+Before running Terraform, populate `dev.tfvars` with values specific to your AWS account:
+
+**Networking**
+
+- `vpc_id` — ID of your VPC (e.g. `vpc-0abc1234...`). Find it in the AWS Console under VPC Dashboard.
+- `public_subnets` — Two public subnet IDs in different Availability Zones (e.g. `["subnet-0abc...", "subnet-0def..."]`). The ALB requires at least 2.
+
+**Security Groups**
+
+- `alb_sg_id` — Security group for the ALB. Must allow inbound traffic on ports 80 and 443 from `0.0.0.0/0`. Create it in EC2 → Security Groups.
+- `app_sg_id` — An existing security group to attach to ECS tasks alongside the one Terraform creates. A minimal or default SG works if you have no extra rules to add.
+
+**Secret**
+
+- `app_secret_arn` — Full ARN of a secret in AWS Secrets Manager (e.g. `arn:aws:secretsmanager:us-east-1:123456789012:secret:my-app-secret-xxxxx`). Create the secret first, then paste its ARN here.
+
+**Pre-requisites before running `terraform apply`**
+
+1. `cojocloudsolutions.com` hosted zone must exist in Route53 in your AWS account.
+2. Docker must be running locally — the ECR module builds and pushes the image during `terraform apply`.
+3. A `./frontend` directory containing a `Dockerfile` must exist at the repo root.
+
+All other variables (`region`, `environment`, `app_cpu`, `app_memory`, `image_tag`, `desired_count`) already have sensible defaults in the file.
+
+---
+
 > **Note:** Replace all placeholders in the Terraform script files before running the commands below.
 
 ```bash
