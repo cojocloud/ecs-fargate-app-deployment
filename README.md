@@ -47,6 +47,7 @@ You need to run a containerized web application in production without managing E
 
 **Optional, only required if you want Terraform state file locking enabled**
 **Create DynamoDB table for state locking:** 
+
 ```aws dynamodb create-table --table-name tf-locks --attribute-definitions AttributeName=LockID,AttributeType=S --key-schema AttributeName=LockID,KeyType=HASH --provisioned-throughput ReadCapacityUnits=1,WriteCapacityUnits=1 --region us-east-1
 ```
 
