@@ -4,27 +4,27 @@
 
 output "ecr_repository_url" {
   description = "ECR Repository URL"
-  value       = aws_ecr_repository.app_repo.repository_url
+  value       = module.ecr.repository_url
 }
 
 output "ecs_cluster_name" {
   description = "ECS Cluster name"
-  value       = aws_ecs_cluster.app_cluster.name
+  value       = module.ecs.cluster_name
 }
 
 output "alb_dns_name" {
   description = "ALB DNS name"
-  value       = aws_lb.app_alb.dns_name
+  value       = module.alb.alb_dns_name
 }
 
 output "service_name" {
   description = "ECS Service name"
-  value       = aws_ecs_service.app_service.name
+  value       = module.ecs.service_name
 }
 
 output "task_role_arn" {
   description = "Task Execution Role ARN"
-  value       = aws_iam_role.ecs_task_execution_role.arn
+  value       = module.iam.task_execution_role_arn
 }
 
 output "subdomain_url" {
