@@ -26,3 +26,8 @@ output "task_role_arn" {
   description = "Task Execution Role ARN"
   value       = aws_iam_role.ecs_task_execution_role.arn
 }
+
+output "subdomain_url" {
+  description = "Application URL via subdomain"
+  value       = "https://${var.domain_name}"
+}

@@ -12,3 +12,9 @@ data "aws_vpc" "default" {
 
 # Get region details
 data "aws_region" "current" {}
+
+# Look up Route53 hosted zone for cojocloudsolutions.com
+data "aws_route53_zone" "main" {
+  name         = "cojocloudsolutions.com"
+  private_zone = false
+}

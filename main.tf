@@ -176,9 +176,93 @@ resource "aws_lb_listener" "app_listener" {
   protocol          = "HTTP"
 
   default_action {
+    type = "redirect"
+
+    redirect {
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301"
+    }
+  }
+}
+
+#---------------------------------------------
+# 8. ACM Certificate for explore.cojocloudsolutions.com
+#---------------------------------------------
+resource "aws_acm_certificate" "cert" {
+  domain_name       = var.domain_name
+  validation_method = "DNS"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  tags = local.common_tags
+}
+
+resource "aws_route53_record" "cert_validation" {
+  for_each = {
+    for dvo in aws_acm_certificate.cert.domain_validation_options : dvo.domain_name => {
+      name   = dvo.resource_record_name
+      record = dvo.resource_record_value
+      type   = dvo.resource_record_type
+    }
+  }
+
+  allow_overwrite = true
+  name            = each.value.name
+  records         = [each.value.record]
+  ttl             = 60
+  type            = each.value.type
+  zone_id         = data.aws_route53_zone.main.zone_id
+}
+
+resource "aws_acm_certificate_validation" "cert_validation" {
+  certificate_arn         = aws_acm_certificate.cert.arn
+  validation_record_fqdns = [for record in aws_route53_record.cert_validation : record.fqdn]
+}
+
+#---------------------------------------------
+# 9. Route53 Alias Record → ALB
+#---------------------------------------------
+resource "aws_route53_record" "subdomain" {
+  zone_id = data.aws_route53_zone.main.zone_id
+  name    = var.domain_name
+  type    = "A"
+
+  alias {
+    name                   = aws_lb.app_alb.dns_name
+    zone_id                = aws_lb.app_alb.zone_id
+    evaluate_target_health = true
+  }
+}
+
+#---------------------------------------------
+# 10. HTTPS Listener (port 443)
+#---------------------------------------------
+resource "aws_security_group_rule" "alb_https_ingress" {
+  type              = "ingress"
+  from_port         = 443
+  to_port           = 443
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = var.alb_sg_id
+  description       = "Allow HTTPS from internet to ALB"
+}
+
+resource "aws_lb_listener" "app_listener_https" {
+  load_balancer_arn = aws_lb.app_alb.arn
+  port              = 443
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
+  certificate_arn   = aws_acm_certificate_validation.cert_validation.certificate_arn
+
+  default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.app_tg.arn
   }
+
+  depends_on = [aws_acm_certificate_validation.cert_validation]
 }
 
 #---------------------------------------------
